@@ -1,0 +1,29 @@
+@startuml
+title C3 Hotelio Business Layer Interactions
+
+Top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+'monolyth
+    Container(cntMonolyth, "Monolyth"){
+        Component(cmpBooking, "Booking Service")
+        Component(cmpUser, "User Service")
+        Component(cmpHotel, "Hotel Service")
+        Component(cmpPromocode, "Promocode Service")
+        Component(cmpReview, "Review Service")
+
+        Lay_Right(cmpBooking,cmpHotel)
+        Lay_Right(cmpHotel,cmpPromocode)
+        Lay_Right(cmpPromocode,cmpUser)
+        Lay_Right(cmpUser,cmpReview)
+    }
+ 
+    Rel(cmpPromocode, cmpUser, "isUserVip")
+
+    Rel(cmpBooking, cmpUser, "IsUserActive\nIsUserBlacklisted\ngetUserStatus")
+    Rel(cmpBooking, cmpHotel, "IsHotelOperational\nIsHotelFullyBooked")
+    Rel(cmpBooking, cmpPromocode, "IsCodeValidForUser")
+    Rel(cmpBooking, cmpReview, "IsTrustedHotel")
+}
+@enduml

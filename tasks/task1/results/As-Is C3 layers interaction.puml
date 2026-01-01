@@ -1,0 +1,65 @@
+@startuml
+title Hotelio Context Diagram
+
+Top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+System_Ext(sysApp, "Client App")
+
+'monolyth
+System(sysHotelio, "Hotelio Layer Interaction")
+Container_Boundary(sysHotelio, ""){
+
+    Container(cntMonolyth2, "API layer"){
+        Component(cmpCBooking, "Booking Controller")
+        Component(cmpCUser, "User Controller")
+        Component(cmpCHotel, "Hotel Controller")
+        Component(cmpCPromocode, "Promocode Controller")
+        Component(cmpCReview, "Review Controller")
+    }
+
+    Container(cntMonolyth, "Busines Layer"){
+        Component(cmpBooking, "Booking Service")
+        Component(cmpUser, "User Service")
+        Component(cmpHotel, "Hotel Service")
+        Component(cmpPromocode, "Promocode Service")
+        Component(cmpReview, "Review Service")
+
+        Lay_Right(cmpBooking,cmpHotel)
+        Lay_Right(cmpHotel,cmpPromocode)
+        Lay_Right(cmpPromocode,cmpUser)
+        Lay_Right(cmpUser,cmpReview)
+    }
+
+    Container(cntMonolyth3, "Data Layer"){
+        Component(cmpRBooking, "Booking Repository")
+        Component(cmpRUser, "User Repository")
+        Component(cmpRHotel, "Hotel Repository")
+        Component(cmpRPromocode, "Promocode Repository")
+        Component(cmpRReview, "Review Repository")
+    }
+
+    Rel(cmpCBooking, cmpBooking, "")
+    Rel(cmpCUser, cmpUser, "")
+    Rel(cmpCHotel, cmpHotel, "")
+    Rel(cmpCPromocode, cmpPromocode, "")
+    Rel(cmpCReview, cmpReview, "")
+
+    Rel(cmpBooking, cmpRBooking, "")
+    Rel(cmpUser, cmpRUser, "")
+    Rel(cmpHotel, cmpRHotel, "")
+    Rel(cmpPromocode, cmpRPromocode, "")
+    Rel(cmpReview, cmpRReview, "")
+    
+    Rel(cmpCReview, cmpRReview, "findByHotelId")
+}
+
+'external
+Rel(sysApp, cmpCBooking, "Uses\nREST")
+Rel(sysApp, cmpCHotel, "Uses\nREST")
+Rel(sysApp, cmpCReview, "Uses\nREST")
+Rel(sysApp, cmpCUser, "Uses\nREST")
+Rel(sysApp, cmpCPromocode, "Uses\nREST")
+
+@enduml
