@@ -1,0 +1,17 @@
+@startuml
+title C3 Hotelio Business Layer Interactions
+
+Top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(userClient, "Booker")
+System_Ext(sysApp, "Client application")
+System_Ext(sysPartners, "Partners integrations")
+System(sysHotelio, "Hotelio")
+
+Rel(userClient, sysApp, "Uses")
+Rel(sysApp, sysHotelio, "Calls\nREST API")
+Rel(sysPartners, sysHotelio, "Calls\nREST API")
+
+@enduml
