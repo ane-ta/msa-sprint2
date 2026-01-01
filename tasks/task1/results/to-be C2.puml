@@ -19,15 +19,18 @@ Container_Boundary(sysHotelio, ""){
     }
     ContainerDb(cntDbReviews, "DB", "PostgreSQL", "Stores data\n")
 
-    Container(cntBFF, "BFF")
+    Container(cntBFF, "BFF","", "Manages API calls for frontend")
+    Container(cntPartnersService, "Integration Service", "", "Manages API calls for Partners integrations")
     Container(cntAPIGateway, "API Gateway")
 
-    Container(cntBooking, "Booking Service", "", "Manages bookings")
-    Container(cntUsers, "User Service", "", "Manages user accounts")
-    Container(cntHotels, "Hotel Service", "", "Manages hotel data")
-    Container(cntPromocodes, "Promocode Service", "", "Manages promocodes")
-    Container(cntReviews, "Review Service", "", "Manages reviews")
-
+    System(sysHotelioLogic, "Business logic services")
+    Container_Boundary(sysHotelioLogic,""){
+        Container(cntBooking, "Booking Service", "", "Manages bookings")
+        Container(cntUsers, "User Service", "", "Manages user accounts")
+        Container(cntHotels, "Hotel Service", "", "Manages hotel data")
+        Container(cntPromocodes, "Promocode Service", "", "Manages promocodes")
+        Container(cntReviews, "Review Service", "", "Manages reviews")
+    }
     Container(cntBroker, "Event Bus", "Kafka", "Handles messages delivering\n                                                                                                                                            ")
 }
 
@@ -54,17 +57,22 @@ Rel(cntReviews, cntBroker, "Interacts")
 
 'bff
 Rel(cntAPIGateway, cntBFF, "Redirects\nGraphQL")
-Rel(cntAPIGateway, cntBooking, "Redirects\nREST API")
-Rel(cntAPIGateway, cntUsers, "Redirects\nREST API")
-Rel(cntAPIGateway, cntHotels, "Redirects\nREST API")
-Rel(cntAPIGateway, cntPromocodes, "Redirects\nREST API")
-Rel(cntAPIGateway, cntReviews, "Redirects\nREST API")
+Rel(cntAPIGateway, cntPartnersService, "Redirects\nREST API")
 
-Rel(cntBFF, cntBooking, "REST API\ncalls")
-Rel(cntBFF, cntUsers, "REST API\ncalls")
-Rel(cntBFF, cntHotels, "REST API\ncalls")
-Rel(cntBFF, cntPromocodes, "REST API\ncalls")
-Rel(cntBFF, cntReviews, "REST API\ncalls")
+Rel(cntPartnersService, sysHotelioLogic, "gRPC\ncalls")
+Rel(cntBFF, sysHotelioLogic, "gRPC\ncalls")
+
+' Rel(cntPartnersService, cntBooking, "gRPC\ncalls")
+' Rel(cntPartnersService, cntUsers, "gRPC\ncalls")
+' Rel(cntPartnersService, cntHotels, "gRPC\ncalls")
+' Rel(cntPartnersService, cntPromocodes, "gRPC\ncalls")
+' Rel(cntPartnersService, cntReviews, "gRPC\ncalls")
+
+' Rel(cntBFF, cntBooking, "gRPC\ncalls")
+' Rel(cntBFF, cntUsers, "gRPC\ncalls")
+' Rel(cntBFF, cntHotels, "gRPC\ncalls")
+' Rel(cntBFF, cntPromocodes, "gRPC\ncalls")
+' Rel(cntBFF, cntReviews, "gRPC\ncalls")
 
 'db
 Rel_Up(cntBooking, cntDbBooking, "Reads/Writes\ndata")
