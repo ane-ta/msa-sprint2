@@ -1,0 +1,90 @@
+@startuml
+title Hotelio Microservices Interaction Diagram
+
+Top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+'monolyth
+System(sysHotelio, "Hotelio System")
+Container_Boundary(sysHotelio, ""){
+
+    Container(cntUsers, "User Service", "", "Manages user accounts\n")
+    Container(cntHotels, "Hotel Service", "", "Manages hotel data\n")
+    Container(cntPromocodes, "Promocode Service", "", "Manages promocodes\n")
+    Container(cntReviews, "Review Service", "", "Manages reviews\n")
+
+    Container(cntBookings, "Booking Service", "", "Manages bookings"){
+        Component_Ext(cmpBookingUsers,"Users Replica", "", "UserId, IsVip, IsUserActive, IsUserBlacklisted")
+        Component_Ext(cmpBookingHotels,"Hotels Replica", "", "HotelId, IsOperational, IsFullyBooked")
+        Component_Ext(cmpBookingPromocodes,"Promocodes Replica", "", "PromoCode, IsVip, IsExpired")
+        Component_Ext(cmpBookingReviews,"Reviews Replica", "", "HotelId, IsTrustedHotel")
+
+        Component(cmpBookingPromocodeValidator,"Promocode Validator", "", "Validates the Promocode for booking the Hotel by the User")
+        Component(cmpBookingPlacesValidator,"Booking Places Validator", "", "Validates empty booking places are available")
+
+        Component(cmpBookings,"Booking Logic", "", "Makes bookings")
+    }
+
+    Container(cntBroker, "Event Bus", "Kafka", "Handles messages delivering\n                                                                                                                                            "){
+        Component(cmpMsgUserValidForBooking, "Users changed")
+        Component(cmpMsgHotelValidForBooking, "Hotels changed","")
+        Component(cmpMsgPromocodeValidForBooking, "Promocodes changed","")
+        Component(cmpMsgReviewsValidForBooking, "Review rating changed","")
+        Component(cmpBookingCreated, "Bookings changed","")
+    }
+'MS interaction
+    Rel(cntReviews, cmpMsgReviewsValidForBooking, "Publishes")
+    Rel(cmpMsgReviewsValidForBooking, cmpBookingReviews, "Subscribed")
+
+    Rel(cntUsers, cmpMsgUserValidForBooking, "Publishes")
+    Rel(cmpMsgUserValidForBooking, cmpBookingUsers, "Subscribed")
+    
+    Rel(cntPromocodes, cmpMsgPromocodeValidForBooking, "Publishes")
+    Rel(cmpMsgPromocodeValidForBooking, cmpBookingPromocodes, "Subscribed")
+
+    Rel(cntHotels, cmpMsgHotelValidForBooking,"Publishes")
+    Rel(cmpMsgHotelValidForBooking, cmpBookingHotels, "Subscribed")
+
+'booking interaction
+    Rel_Up(cmpBookings, cmpBookingHotels,"Uses")
+    Rel_Up(cmpBookings, cmpBookingUsers,"Uses")
+    Rel_Up(cmpBookings, cmpBookingPromocodes,"Uses")
+    Rel_Up(cmpBookings, cmpBookingReviews,"Uses")
+    Rel_Up(cmpBookings, cmpBookingPromocodeValidator,"Uses")
+    Rel_Up(cmpBookings, cmpBookingPlacesValidator,"Uses")
+
+    Rel_Up(cmpBookingPromocodeValidator, cmpBookingPromocodes, "Uses")
+    Rel_Up(cmpBookingPromocodeValidator, cmpBookingUsers, "Uses")
+
+    Rel_Up(cmpBookings, cmpBookingCreated,"Publishes")
+}
+'layings
+' Lay_Right(cntDbUsers,cntDbHotels)
+' Lay_Right(cntDbHotels,cntDbPromocodes)
+' Lay_Right(cntDbPromocodes,cntDbReviews)
+
+Lay_Right(cntBookings,cntUsers)
+Lay_Right(cntUsers,cntHotels)
+Lay_Right(cntHotels,cntPromocodes)
+Lay_Right(cntPromocodes,cntReviews)
+
+Lay_Right(cmpBookingHotels,cmpBookingUsers)
+Lay_Right(cmpBookingUsers,cmpBookingPromocodes)
+Lay_Right(cmpBookingPromocodes,cmpBookingReviews)
+
+'broker
+' Rel(cntBFF, cntBroker, "Interacts")
+' Rel(cntBooking, cntBroker, "Interacts")
+' Rel(cntUsers, cntBroker, "Interacts")
+' Rel(cntHotels, cntBroker, "Interacts")
+' Rel(cntPromocodes, cntBroker, "Interacts")
+' Rel(cntReviews, cntBroker, "Interacts")
+
+'db
+' Rel_Down(cntBookings, cntDbBookings, "Reads / Writes\ndata")
+' Rel_Up(cntUsers, cntDbUsers, "Reads / Writes\ndata")
+' Rel_Up(cntHotels, cntDbHotels, "Reads / Writes\ndata")
+' Rel_Up(cntPromocodes, cntDbPromocodes, "Reads / Writes\ndata")
+' Rel_Up(cntReviews, cntDbReviews, "Reads / Writes\ndata")
+@enduml
