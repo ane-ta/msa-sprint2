@@ -5,7 +5,7 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - ASPNETCORE_URLS=http://+:9090
-      # - ConnectionStrings:DefaultConnection=Host=booking-db;Port=5432;Database=bookingdb;Username=hotelio;Password=hotelio
+      - ConnectionStrings:DefaultConnection=Host=booking-db;Port=5432;Database=bookingdb;Username=hotelio;Password=hotelio
 
     ports:
       - "8080"

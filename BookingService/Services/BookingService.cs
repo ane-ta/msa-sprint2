@@ -1,11 +1,11 @@
-using Booking;
+using BookingContracts;
 using Confluent.Kafka;
 using Google.Protobuf;
 using Grpc.Core;
 
 namespace BookingService.Services;
 
-public class BookingService : Booking.BookingService.BookingServiceBase
+public class BookingService : BookingContracts.BookingService.BookingServiceBase
 {
 	private readonly IConfiguration _configuration;
 	private readonly ILogger<BookingService> _logger;
