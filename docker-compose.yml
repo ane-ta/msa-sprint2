@@ -1,0 +1,31 @@
+services:
+  booking-service:
+    image: ${DOCKER_REGISTRY-}booking-service
+    build:
+      context: .
+      dockerfile: BookingService/Dockerfile
+    ports:
+      - "9090:9090"
+    networks:
+      - hotelio-net
+  
+  # booking-db:
+  #   image: postgres:15
+  #   container_name: hotelio-booking-db
+  #   environment:
+  #     POSTGRES_USER: hotelio
+  #     POSTGRES_PASSWORD: hotelio
+  #     POSTGRES_DB: hotelio
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - hotelio-booking-db-data:/var/lib/postgresql/data
+  #   networks:
+  #     - hotelio-net
+
+volumes:
+  hotelio-booking-db-data:
+
+networks:
+  hotelio-net:
+    external: true
