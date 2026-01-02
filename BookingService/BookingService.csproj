@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>b7324fe4-4cee-4329-8a97-5c16d4277456</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <!--<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>-->
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
     <!--<DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>-->
   </PropertyGroup>
@@ -16,7 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="2.12.0" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.6" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6" />
+	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
+
+	  <PackageReference Include="Confluent.Kafka" Version="2.12.0" />
     <PackageReference Include="Google.Protobuf" Version="3.33.2" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
     <PackageReference Include="Grpc.Tools" Version="2.76.0">
