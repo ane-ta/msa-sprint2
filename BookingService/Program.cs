@@ -1,5 +1,9 @@
 using BookingService.Services;
 
+// !!! ВАЖНО ДЛЯ DOCKER !!! 
+// Разрешаем HTTP/2 без шифрования (TLS) для работы внутри Docker сети.
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
