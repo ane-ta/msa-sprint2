@@ -1,8 +1,10 @@
 using BookingMicroService.Grpc;
+using BookingService.Models;
 using BookingService.Models.MonolothDtos;
 using Confluent.Kafka;
 using Google.Protobuf;
 using Grpc.Core;
+using System;
 using System.Text.Json;
 
 namespace BookingService.Services;
@@ -30,7 +32,20 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 		await ValidateUser(request.UserId);
 		await ValidateHotel(request.HotelId);
 
+		var basePrice = await ResolveBasePrice(request.UserId);
+		var discountPercent = await ResolvePromoDiscountPercent(request.PromoCode, request.UserId);
 
+		var finalPrice = basePrice * (1 - discountPercent);
+
+		var newBooking = new Booking
+		{
+			UserId = request.UserId,
+			HotelId = request.HotelId,
+			PromoCode = request.PromoCode,
+			DiscountPercent = discountPercent,
+			Price = finalPrice,
+			CreatedAt = DateTimeOffset.Now,
+		};
 
 		// Генерируем ID и текущее время
 		var bookingId = Guid.NewGuid().ToString();
@@ -57,13 +72,8 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateUser(string userId)
 	{
-		var userDto = await RequestREST<User?>($"http://monolith:8080/api/users/{userId}", $"User not found in monolith API");
+		var userDto = await GetRest<User>($"http://monolith:8080/api/users/{userId}");
 
-		if (userDto == null)
-		{
-			_logger.LogError("Empty data for userId");
-			throw new RpcException(new Status(StatusCode.Internal, $"Invalid data from monolith API for user ID"));
-		}
 		if (!userDto.active)
 		{
 			_logger.LogWarning($"User {userId} is inactive");
@@ -79,47 +89,89 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateHotel(string hotelId)
 	{
-		var hotelNotFoundMsg = "Hotel not found in monolith API";
-
-		var hotelDto = await RequestREST<bool>($"http://monolith:8080/api/hotels/{hotelId}/operational", hotelNotFoundMsg);
-		if (hotelDto == false)
+		var isOperational = await GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/operational");
+		if (isOperational == false)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is not operational");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not operational"));
 		}
 
-		var isTrusted = await RequestREST<bool?>($"http://monolith:8080/api/reviews/hotel/{hotelId}/trusted", hotelNotFoundMsg);
+		var isTrusted = await GetRest<bool>($"http://monolith:8080/api/reviews/hotel/{hotelId}/trusted");
 		if (isTrusted == false)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is not trusted");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not trusted"));
 		}
 	
-		var isFullyBooked = await RequestREST<bool?>($"http://monolith:8080/api/hotels/{hotelId}/fully-booked", hotelNotFoundMsg);
+		var isFullyBooked = await GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/fully-booked");
 		if (isFullyBooked == true)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is fully booked");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is fully booked"));
 		}
-
 	}
-	private async Task<T?> RequestREST<T>(string url, string notFoundMsg)
+	private async Task<decimal> ResolveBasePrice( string userId)
+	{
+		var isVip = await GetRest<bool>($"http://monolith:8080/api/users/{userId}/vip");
+		var basePrice = isVip ? 80.0m : 100.0m;
+
+		_logger.LogDebug(@"User status is vip: '{0}', base price is {1}", isVip, basePrice);
+		
+		return basePrice;
+	}
+
+	private async Task<decimal> ResolvePromoDiscountPercent(String promoCode, string userId)
+	{
+		if (promoCode == null)
+		{
+			return 0.0m;
+		}
+
+		var code = await PostRest<Promocode>($"http://monolith:8080/api/promos/validate?code={promoCode}&userId={userId}");
+
+		return code.discountPercent;
+	}
+
+	private async Task<T> ProcessResponseMessage<T>(HttpResponseMessage msg)
+	{
+		if (!msg.IsSuccessStatusCode)
+		{
+			throw new RpcException(
+				new Status( 
+						StatusCode.NotFound, 
+						$"Failed to get succesful response from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}. Response status code is {msg.StatusCode}"));
+		}
+
+		var dataJson = await msg.Content.ReadAsStringAsync();
+		var result = JsonSerializer.Deserialize<T>(dataJson);
+
+		if (result == null)
+		{
+			_logger.LogError($"Failed to deserialize response from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}");
+			throw new RpcException(new Status(StatusCode.Internal, $"Invalid data format received from external API from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}"));
+		}
+
+		return result;
+	}
+
+	private async Task<T> GetRest<T>(string url)
 	{
 		var httpClient = _clientFactory.CreateClient();
 
-		var response = await httpClient.GetAsync(url);
+		var msg = await httpClient.GetAsync(url);
 
-		if (response.IsSuccessStatusCode)
-		{
-			var dataJson = await response.Content.ReadAsStringAsync();
-			return JsonSerializer.Deserialize<T>(dataJson);
-		}
-		else
-		{
-			// Обработка ошибки
-			throw new RpcException(new Status(StatusCode.NotFound, notFoundMsg));
-		}
+		return await ProcessResponseMessage<T>(msg);
 	}
+
+	private async Task<T> PostRest<T>(string url)
+	{
+		var httpClient = _clientFactory.CreateClient();
+
+		var msg = await httpClient.PostAsync(url, null);
+		
+		return await ProcessResponseMessage<T>(msg);
+	}
+
 	// --- Реализация gRPC метода ListBookings (заглушка) ---
 	public override Task<BookingListResponse> ListBookings(BookingListRequest request, ServerCallContext context)
 	{
