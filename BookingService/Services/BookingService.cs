@@ -28,6 +28,8 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 		// В реальном приложении здесь была бы логика бизнес-валидации,
 		// взаимодействие с базой данных и расчет цены/скидки.
 		await ValidateUser(request.UserId);
+		await ValidateHotel(request.HotelId);
+
 
 
 		// Генерируем ID и текущее время
@@ -55,41 +57,69 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateUser(string userId)
 	{
-		var httpClient = _clientFactory.CreateClient();
+		var userDto = await RequestREST<User?>($"http://monolith:8080/api/users/{userId}", $"User not found in monolith API");
 
-		var url = $"http://monolith:8080/api/users/{userId}";
+		if (userDto == null)
+		{
+			_logger.LogError("Empty data for userId");
+			throw new RpcException(new Status(StatusCode.Internal, $"Invalid data from monolith API for user ID"));
+		}
+		if (!userDto.active)
+		{
+			_logger.LogWarning($"User {userId} is inactive");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"User is inactive"));
+		}
+
+		if (userDto.blacklisted)
+		{
+			_logger.LogWarning($"User {userId} is blacklisted");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"User is blacklisted"));
+		}
+	}
+
+	private async Task ValidateHotel(string hotelId)
+	{
+		var hotelNotFoundMsg = "Hotel not found in monolith API";
+
+		var hotelDto = await RequestREST<bool>($"http://monolith:8080/api/hotels/{hotelId}/operational", hotelNotFoundMsg);
+		if (hotelDto == false)
+		{
+			_logger.LogWarning($"Hotel {hotelId} is not operational");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not operational"));
+		}
+
+		var isTrusted = await RequestREST<bool?>($"http://monolith:8080/api/reviews/hotel/{hotelId}/trusted", hotelNotFoundMsg);
+		if (isTrusted == false)
+		{
+			_logger.LogWarning($"Hotel {hotelId} is not trusted");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not trusted"));
+		}
+	
+		var isFullyBooked = await RequestREST<bool?>($"http://monolith:8080/api/hotels/{hotelId}/fully-booked", hotelNotFoundMsg);
+		if (isFullyBooked == true)
+		{
+			_logger.LogWarning($"Hotel {hotelId} is fully booked");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is fully booked"));
+		}
+
+	}
+	private async Task<T?> RequestREST<T>(string url, string notFoundMsg)
+	{
+		var httpClient = _clientFactory.CreateClient();
 
 		var response = await httpClient.GetAsync(url);
 
 		if (response.IsSuccessStatusCode)
 		{
 			var dataJson = await response.Content.ReadAsStringAsync();
-			var userDto = JsonSerializer.Deserialize<User>(dataJson);
-
-			if(userDto == null)
-			{
-				_logger.LogError("Empty data for userId");
-				throw new RpcException(new Status(StatusCode.Internal, $"Invalid data from monolith API for user ID"));
-			}
-			if (!userDto.active)
-			{
-				_logger.LogWarning($"User {userId} is inactive");
-				throw new RpcException(new Status(StatusCode.FailedPrecondition, $"User is inactive"));
-			}
-			
-			if ( userDto.blacklisted )
-			{
-				_logger.LogWarning($"User {userId} is blacklisted");
-				throw new RpcException(new Status(StatusCode.FailedPrecondition, $"User is blacklisted"));
-			}
+			return JsonSerializer.Deserialize<T>(dataJson);
 		}
 		else
 		{
 			// Обработка ошибки
-			throw new RpcException(new Status(StatusCode.NotFound, $"User not found in monolith API"));
+			throw new RpcException(new Status(StatusCode.NotFound, notFoundMsg));
 		}
 	}
-
 	// --- Реализация gRPC метода ListBookings (заглушка) ---
 	public override Task<BookingListResponse> ListBookings(BookingListRequest request, ServerCallContext context)
 	{
