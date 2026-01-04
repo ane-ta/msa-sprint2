@@ -18,6 +18,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<BookingContext>(options =>
 	options.UseNpgsql(connectionString));
 
+builder.Services.AddTransient<RestService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

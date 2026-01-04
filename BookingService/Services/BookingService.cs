@@ -11,15 +11,15 @@ namespace BookingService.Services;
 
 public class BookingService : BookingMicroService.Grpc.BookingService.BookingServiceBase
 {
+	private readonly RestService _rest;
 	private readonly IConfiguration _configuration;
-	private readonly IHttpClientFactory _clientFactory;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(IConfiguration configuration, ILogger<BookingService> logger, IHttpClientFactory clientFactory)
+	public BookingService(IConfiguration configuration, ILogger<BookingService> logger, RestService rest)
 	{
 		_configuration = configuration;
 		_logger = logger;
-		_clientFactory = clientFactory;
+		_rest = rest;
 	}
 
 	private async Task<Booking> ResolveBooking(BookingRequest request)
@@ -74,7 +74,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateUser(string userId)
 	{
-		var userDto = await GetRest<User>($"http://monolith:8080/api/users/{userId}");
+		var userDto = await _rest.GetRest<User>($"http://monolith:8080/api/users/{userId}");
 
 		if (!userDto.active)
 		{
@@ -91,21 +91,21 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateHotel(string hotelId)
 	{
-		var isOperational = await GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/operational");
+		var isOperational = await _rest.GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/operational");
 		if (isOperational == false)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is not operational");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not operational"));
 		}
 
-		var isTrusted = await GetRest<bool>($"http://monolith:8080/api/reviews/hotel/{hotelId}/trusted");
+		var isTrusted = await _rest.GetRest<bool>($"http://monolith:8080/api/reviews/hotel/{hotelId}/trusted");
 		if (isTrusted == false)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is not trusted");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not trusted"));
 		}
 	
-		var isFullyBooked = await GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/fully-booked");
+		var isFullyBooked = await _rest.GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/fully-booked");
 		if (isFullyBooked == true)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is fully booked");
@@ -114,7 +114,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 	}
 	private async Task<decimal> ResolveBasePrice( string userId)
 	{
-		var isVip = await GetRest<bool>($"http://monolith:8080/api/users/{userId}/vip");
+		var isVip = await _rest.GetRest<bool>($"http://monolith:8080/api/users/{userId}/vip");
 		var basePrice = isVip ? 80.0m : 100.0m;
 
 		_logger.LogDebug(@"User status is vip: '{0}', base price is {1}", isVip, basePrice);
@@ -129,49 +129,9 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			return 0.0m;
 		}
 
-		var code = await PostRest<Promocode>($"http://monolith:8080/api/promos/validate?code={promoCode}&userId={userId}");
+		var code = await _rest.PostRest<Promocode>($"http://monolith:8080/api/promos/validate?code={promoCode}&userId={userId}");
 
 		return code.discountPercent;
-	}
-
-	private async Task<T> ProcessResponseMessage<T>(HttpResponseMessage msg)
-	{
-		if (!msg.IsSuccessStatusCode)
-		{
-			throw new RpcException(
-				new Status( 
-						StatusCode.NotFound, 
-						$"Failed to get succesful response from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}. Response status code is {msg.StatusCode}"));
-		}
-
-		var dataJson = await msg.Content.ReadAsStringAsync();
-		var result = JsonSerializer.Deserialize<T>(dataJson);
-
-		if (result == null)
-		{
-			_logger.LogError($"Failed to deserialize response from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}");
-			throw new RpcException(new Status(StatusCode.Internal, $"Invalid data format received from external API from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}"));
-		}
-
-		return result;
-	}
-
-	private async Task<T> GetRest<T>(string url)
-	{
-		var httpClient = _clientFactory.CreateClient();
-
-		var msg = await httpClient.GetAsync(url);
-
-		return await ProcessResponseMessage<T>(msg);
-	}
-
-	private async Task<T> PostRest<T>(string url)
-	{
-		var httpClient = _clientFactory.CreateClient();
-
-		var msg = await httpClient.PostAsync(url, null);
-		
-		return await ProcessResponseMessage<T>(msg);
 	}
 
 	// --- Реализация gRPC метода ListBookings (заглушка) ---
