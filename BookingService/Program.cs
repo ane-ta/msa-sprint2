@@ -1,7 +1,10 @@
 using BookingService.Data;
 using BookingService.Repositories;
 using BookingService.Services;
+using Confluent.Kafka;
+using KafkaLibrary;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 // !!! ВАЖНО ДЛЯ DOCKER !!! 
 // Разрешаем HTTP/2 без шифрования (TLS) для работы внутри Docker сети.
@@ -24,6 +27,16 @@ builder.Services.AddTransient<UserService>();
 builder.Services.AddTransient<HotelService>();
 builder.Services.AddTransient<PromoService>();
 builder.Services.AddTransient<BookingRepository>();
+builder.Services.AddSingleton<IKafkaProduceService, KafkaStringProduceService>(sp =>
+{
+	var configuration = sp.GetRequiredService<IConfiguration>();
+
+	var config = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
+
+	var logger = sp.GetRequiredService<ILogger<KafkaStringProduceService>>();
+
+	return new KafkaStringProduceService(config, logger);
+});
 
 var app = builder.Build();
 

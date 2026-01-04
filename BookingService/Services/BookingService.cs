@@ -1,12 +1,8 @@
 using BookingMicroService.Grpc;
 using BookingService.Models;
-using BookingService.Models.MonolothDtos;
 using BookingService.Repositories;
-using Confluent.Kafka;
-using Google.Protobuf;
 using Grpc.Core;
-using System;
-using System.Text.Json;
+using KafkaLibrary;
 
 namespace BookingService.Services;
 
@@ -17,9 +13,10 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 	private readonly HotelService _hotelService;
 	private readonly PromoService _promoService;
 	private readonly IConfiguration _configuration;
+	private readonly IKafkaProduceService _kafkaProduceService;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(BookingRepository bookingRepo, UserService userService, HotelService hotelService, PromoService promoService, IConfiguration configuration, ILogger<BookingService> logger)
+	public BookingService(IKafkaProduceService kafkaProduceService, BookingRepository bookingRepo, UserService userService, HotelService hotelService, PromoService promoService, IConfiguration configuration, ILogger<BookingService> logger)
 	{
 		_bookingRepo = bookingRepo;
 		_userService = userService;
@@ -27,6 +24,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 		_promoService = promoService;
 		_configuration = configuration;
 		_logger = logger;
+		_kafkaProduceService = kafkaProduceService;
 	}
 
 	private async Task<Booking> ResolveBooking(BookingRequest request)
@@ -72,7 +70,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 		var bookingEvent = MapBookingResponse(newBooking);
 
-//		await ProduceKafkaMessageAsync("hotel-booking-events", bookingEvent);
+		await _kafkaProduceService.PublishAsync("BookingCreated", bookingEvent);
 
 		return bookingEvent;
 	}
@@ -135,19 +133,5 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 		}
 		
 		return response;
-	}
-
-	// --- Метод-помощник для отправки в Kafka ---
-	private async Task ProduceKafkaMessageAsync(string topic, BookingResponse message)
-	{
-		var config = new ProducerConfig { BootstrapServers = _configuration["Kafka:BootstrapServers"] };
-
-		using (var producer = new ProducerBuilder<Null, ByteString>(config).Build())
-		{
-			// Сериализация Protobuf сообщения в байты
-			var messageBytes = message.ToByteString();
-			var dr = await producer.ProduceAsync(topic, new Message<Null, ByteString> { Value = messageBytes });
-			_logger.LogInformation($"Delivered message to {dr.TopicPartitionOffset}");
-		}
 	}
 }

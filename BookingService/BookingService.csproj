@@ -35,4 +35,8 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\KafkaLibrary\KafkaLibrary.csproj" />
+  </ItemGroup>
+
 </Project>
