@@ -13,15 +13,17 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 {
 	private readonly RestService _rest;
 	private readonly UserService _userService;
+	private readonly HotelService _hotelService;
 	private readonly IConfiguration _configuration;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(IConfiguration configuration, ILogger<BookingService> logger, RestService rest, UserService userService)
+	public BookingService(RestService rest, UserService userService, HotelService hotelService, IConfiguration configuration, ILogger<BookingService> logger)
 	{
-		_configuration = configuration;
-		_logger = logger;
 		_rest = rest;
 		_userService = userService;
+		_hotelService = hotelService;
+		_configuration = configuration;
+		_logger = logger;
 	}
 
 	private async Task<Booking> ResolveBooking(BookingRequest request)
@@ -87,25 +89,12 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateHotel(string hotelId)
 	{
-		var isOperational = await _rest.GetRest<bool>($"/api/hotels/{hotelId}/operational");
-		if (isOperational == false)
-		{
-			_logger.LogWarning($"Hotel {hotelId} is not operational");
-			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not operational"));
-		}
+		var validationResult = await _hotelService.ValidateHotelForBooking(hotelId);
 
-		var isTrusted = await _rest.GetRest<bool>($"/api/reviews/hotel/{hotelId}/trusted");
-		if (isTrusted == false)
+		if (!validationResult.IsValid)
 		{
-			_logger.LogWarning($"Hotel {hotelId} is not trusted");
-			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not trusted"));
-		}
-	
-		var isFullyBooked = await _rest.GetRest<bool>($"/api/hotels/{hotelId}/fully-booked");
-		if (isFullyBooked == true)
-		{
-			_logger.LogWarning($"Hotel {hotelId} is fully booked");
-			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is fully booked"));
+			_logger.LogWarning($"Hotel {hotelId} is invalid for booking: {validationResult.Message}");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, validationResult.Message));
 		}
 	}
 	private async Task<decimal> ResolveBasePrice( string userId)

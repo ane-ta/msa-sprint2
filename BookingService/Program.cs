@@ -20,6 +20,7 @@ builder.Services.AddDbContext<BookingContext>(options =>
 
 builder.Services.AddTransient<RestService>();
 builder.Services.AddTransient<UserService>();
+builder.Services.AddTransient<HotelService>();
 
 var app = builder.Build();
 
