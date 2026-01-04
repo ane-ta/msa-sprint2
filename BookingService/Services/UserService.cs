@@ -1,5 +1,6 @@
 ﻿using BookingService.Models;
 using BookingService.Models.MonolothDtos;
+using System.ComponentModel;
 
 namespace BookingService.Services
 {
@@ -34,6 +35,11 @@ namespace BookingService.Services
 			}
 
 			return ValidationResult.Sucessful();
+		}
+
+		public async Task<bool> IsUserVip(string userId)
+		{
+			return await _rest.GetRest<bool>($"/api/users/{userId}/vip");
 		}
 
 		public async Task<ValidationResult> ValidateUserForBooking(string userId)

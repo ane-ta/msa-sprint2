@@ -99,7 +99,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 	}
 	private async Task<decimal> ResolveBasePrice( string userId)
 	{
-		var isVip = await _rest.GetRest<bool>($"/api/users/{userId}/vip");
+		var isVip = await _userService.IsUserVip(userId);
 		var basePrice = isVip ? 80.0m : 100.0m;
 
 		_logger.LogDebug(@"User status is vip: '{0}', base price is {1}", isVip, basePrice);
