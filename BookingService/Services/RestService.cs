@@ -38,20 +38,27 @@ namespace BookingService.Services
 			return result;
 		}
 
-		public async Task<T> GetRest<T>(string url)
+		private string GetUrl(string path)
+		{
+			var baseUrl = _configuration["ApiSettings:MonolithBaseUrl"];
+
+			return $"{baseUrl}/{path}";
+		}
+
+		public async Task<T> GetRest<T>(string urlPath)
 		{
 			var httpClient = _clientFactory.CreateClient();
 
-			var msg = await httpClient.GetAsync(url);
+			var msg = await httpClient.GetAsync( GetUrl(urlPath));
 
 			return await ProcessResponseMessage<T>(msg);
 		}
 
-		public async Task<T> PostRest<T>(string url)
+		public async Task<T> PostRest<T>(string urlPath)
 		{
 			var httpClient = _clientFactory.CreateClient();
 
-			var msg = await httpClient.PostAsync(url, null);
+			var msg = await httpClient.PostAsync(GetUrl(urlPath), null);
 
 			return await ProcessResponseMessage<T>(msg);
 		}

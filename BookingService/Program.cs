@@ -19,6 +19,7 @@ builder.Services.AddDbContext<BookingContext>(options =>
 	options.UseNpgsql(connectionString));
 
 builder.Services.AddTransient<RestService>();
+builder.Services.AddTransient<UserService>();
 
 var app = builder.Build();
 

@@ -12,14 +12,16 @@ namespace BookingService.Services;
 public class BookingService : BookingMicroService.Grpc.BookingService.BookingServiceBase
 {
 	private readonly RestService _rest;
+	private readonly UserService _userService;
 	private readonly IConfiguration _configuration;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(IConfiguration configuration, ILogger<BookingService> logger, RestService rest)
+	public BookingService(IConfiguration configuration, ILogger<BookingService> logger, RestService rest, UserService userService)
 	{
 		_configuration = configuration;
 		_logger = logger;
 		_rest = rest;
+		_userService = userService;
 	}
 
 	private async Task<Booking> ResolveBooking(BookingRequest request)
@@ -74,38 +76,32 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task ValidateUser(string userId)
 	{
-		var userDto = await _rest.GetRest<User>($"http://monolith:8080/api/users/{userId}");
+		var validationResult = await _userService.ValidateUserForBooking(userId);
 
-		if (!userDto.active)
+		if (!validationResult.IsValid)
 		{
-			_logger.LogWarning($"User {userId} is inactive");
-			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"User is inactive"));
-		}
-
-		if (userDto.blacklisted)
-		{
-			_logger.LogWarning($"User {userId} is blacklisted");
-			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"User is blacklisted"));
+			_logger.LogWarning($"User {userId} is invalid for booking: {validationResult.Message}");
+			throw new RpcException(new Status(StatusCode.FailedPrecondition, validationResult.Message));
 		}
 	}
 
 	private async Task ValidateHotel(string hotelId)
 	{
-		var isOperational = await _rest.GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/operational");
+		var isOperational = await _rest.GetRest<bool>($"/api/hotels/{hotelId}/operational");
 		if (isOperational == false)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is not operational");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not operational"));
 		}
 
-		var isTrusted = await _rest.GetRest<bool>($"http://monolith:8080/api/reviews/hotel/{hotelId}/trusted");
+		var isTrusted = await _rest.GetRest<bool>($"/api/reviews/hotel/{hotelId}/trusted");
 		if (isTrusted == false)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is not trusted");
 			throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Hotel is not trusted"));
 		}
 	
-		var isFullyBooked = await _rest.GetRest<bool>($"http://monolith:8080/api/hotels/{hotelId}/fully-booked");
+		var isFullyBooked = await _rest.GetRest<bool>($"/api/hotels/{hotelId}/fully-booked");
 		if (isFullyBooked == true)
 		{
 			_logger.LogWarning($"Hotel {hotelId} is fully booked");
@@ -114,7 +110,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 	}
 	private async Task<decimal> ResolveBasePrice( string userId)
 	{
-		var isVip = await _rest.GetRest<bool>($"http://monolith:8080/api/users/{userId}/vip");
+		var isVip = await _rest.GetRest<bool>($"/api/users/{userId}/vip");
 		var basePrice = isVip ? 80.0m : 100.0m;
 
 		_logger.LogDebug(@"User status is vip: '{0}', base price is {1}", isVip, basePrice);
@@ -129,7 +125,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			return 0.0m;
 		}
 
-		var code = await _rest.PostRest<Promocode>($"http://monolith:8080/api/promos/validate?code={promoCode}&userId={userId}");
+		var code = await _rest.PostRest<Promocode>($"/api/promos/validate?code={promoCode}&userId={userId}");
 
 		return code.discountPercent;
 	}
