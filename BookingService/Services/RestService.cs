@@ -16,7 +16,7 @@ namespace BookingService.Services
 			_logger = logger;
 		}
 
-		private async Task<T> ProcessResponseMessage<T>(HttpResponseMessage msg)
+		private async Task<T?> ValidateResponse<T>(HttpResponseMessage msg, bool isNullable)
 		{
 			if (!msg.IsSuccessStatusCode)
 			{
@@ -27,6 +27,18 @@ namespace BookingService.Services
 			}
 
 			var dataJson = await msg.Content.ReadAsStringAsync();
+
+			if(String.IsNullOrWhiteSpace(dataJson))
+			{
+				if(!isNullable)
+				{
+					_logger.LogError($"Unexpected null response from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}");
+					throw new RpcException(new Status(StatusCode.Internal, $"Unexpected null response received from external API from {msg.RequestMessage.Method} request to {msg.RequestMessage.RequestUri}"));
+				}
+
+				return default(T);
+			}
+
 			var result = JsonSerializer.Deserialize<T>(dataJson);
 
 			if (result == null)
@@ -45,22 +57,23 @@ namespace BookingService.Services
 			return $"{baseUrl}/{path}";
 		}
 
-		public async Task<T> GetRest<T>(string urlPath)
+		public async Task<T> GetRest<T>(string urlPath) where T : notnull
 		{
 			var httpClient = _clientFactory.CreateClient();
 
-			var msg = await httpClient.GetAsync( GetUrl(urlPath));
+			var msg = await httpClient.GetAsync(GetUrl(urlPath));
 
-			return await ProcessResponseMessage<T>(msg);
+			var result  = await ValidateResponse<T>(msg, false);
+			return result!;
 		}
 
-		public async Task<T> PostRest<T>(string urlPath)
+		public async Task<T?> PostNullableRest<T>(string urlPath)
 		{
 			var httpClient = _clientFactory.CreateClient();
 
 			var msg = await httpClient.PostAsync(GetUrl(urlPath), null);
 
-			return await ProcessResponseMessage<T>(msg);
+			return await ValidateResponse<T>(msg, true);
 		}
 	}
 }

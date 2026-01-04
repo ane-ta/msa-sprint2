@@ -14,14 +14,16 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 	private readonly RestService _rest;
 	private readonly UserService _userService;
 	private readonly HotelService _hotelService;
+	private readonly PromoService _promoService;
 	private readonly IConfiguration _configuration;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(RestService rest, UserService userService, HotelService hotelService, IConfiguration configuration, ILogger<BookingService> logger)
+	public BookingService(RestService rest, UserService userService, HotelService hotelService, PromoService promocodeService, IConfiguration configuration, ILogger<BookingService> logger)
 	{
 		_rest = rest;
 		_userService = userService;
 		_hotelService = hotelService;
+		_promoService = promocodeService;
 		_configuration = configuration;
 		_logger = logger;
 	}
@@ -114,9 +116,10 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			return 0.0m;
 		}
 
-		var code = await _rest.PostRest<Promocode>($"/api/promos/validate?code={promoCode}&userId={userId}");
+		var result = await _promoService.ResolvePromoDiscount(promoCode, userId);
+		_logger.LogDebug($"Promocode {promoCode} applied discount percent: '{result}'");
 
-		return code.discountPercent;
+		return result;
 	}
 
 	// --- Реализация gRPC метода ListBookings (заглушка) ---
