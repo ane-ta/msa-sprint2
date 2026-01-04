@@ -54,7 +54,7 @@ namespace BookingService.Services
 		{
 			var baseUrl = _configuration["ApiSettings:MonolithBaseUrl"];
 
-			return $"{baseUrl}/{path}";
+			return $"{baseUrl}{path}";
 		}
 
 		public async Task<T> GetRest<T>(string urlPath) where T : notnull
