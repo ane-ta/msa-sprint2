@@ -1,4 +1,5 @@
 using BookingService.Data;
+using BookingService.Repositories;
 using BookingService.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,8 @@ builder.Services.AddDbContext<BookingContext>(options =>
 builder.Services.AddTransient<RestService>();
 builder.Services.AddTransient<UserService>();
 builder.Services.AddTransient<HotelService>();
+builder.Services.AddTransient<PromoService>();
+builder.Services.AddTransient<BookingRepository>();
 
 var app = builder.Build();
 
