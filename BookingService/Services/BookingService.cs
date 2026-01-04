@@ -11,16 +11,14 @@ namespace BookingService.Services;
 
 public class BookingService : BookingMicroService.Grpc.BookingService.BookingServiceBase
 {
-	private readonly RestService _rest;
 	private readonly UserService _userService;
 	private readonly HotelService _hotelService;
 	private readonly PromoService _promoService;
 	private readonly IConfiguration _configuration;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(RestService rest, UserService userService, HotelService hotelService, PromoService promocodeService, IConfiguration configuration, ILogger<BookingService> logger)
+	public BookingService(UserService userService, HotelService hotelService, PromoService promocodeService, IConfiguration configuration, ILogger<BookingService> logger)
 	{
-		_rest = rest;
 		_userService = userService;
 		_hotelService = hotelService;
 		_promoService = promocodeService;
