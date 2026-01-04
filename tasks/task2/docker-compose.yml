@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: hotelio
       POSTGRES_DB: hotelio
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - monolith-db-data:/var/lib/postgresql/data
     networks:

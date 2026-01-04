@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: BookingService/Dockerfile
+    depends_on:
+      - booking-db
     ports:
       - "9090:9090"
     networks:
@@ -17,7 +19,7 @@ services:
       POSTGRES_PASSWORD: hotelio
       POSTGRES_DB: hotelio
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - hotelio-booking-db-data:/var/lib/postgresql/data
     networks:
