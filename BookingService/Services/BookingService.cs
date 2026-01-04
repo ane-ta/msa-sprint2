@@ -22,22 +22,17 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 		_clientFactory = clientFactory;
 	}
 
-	// --- Реализация gRPC метода CreateBooking ---
-	public override async Task<BookingResponse> CreateBooking(BookingRequest request, ServerCallContext context)
+	private async Task<Booking> ResolveBooking(BookingRequest request)
 	{
-		_logger.LogInformation($"Received booking request for user {request.UserId} hotel {request.HotelId}");
-
-		// В реальном приложении здесь была бы логика бизнес-валидации,
-		// взаимодействие с базой данных и расчет цены/скидки.
 		await ValidateUser(request.UserId);
 		await ValidateHotel(request.HotelId);
 
 		var basePrice = await ResolveBasePrice(request.UserId);
 		var discountPercent = await ResolvePromoDiscountPercent(request.PromoCode, request.UserId);
 
-		var finalPrice = basePrice * (1 - discountPercent);
+		var finalPrice = basePrice * (1 - discountPercent / 100);
 
-		var newBooking = new Booking
+		return new Booking
 		{
 			UserId = request.UserId,
 			HotelId = request.HotelId,
@@ -46,21 +41,28 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			Price = finalPrice,
 			CreatedAt = DateTimeOffset.Now,
 		};
+	}
 
-		// Генерируем ID и текущее время
-		var bookingId = Guid.NewGuid().ToString();
-		var creationTime = DateTime.UtcNow;
+	// --- Реализация gRPC метода CreateBooking ---
+	public override async Task<BookingResponse> CreateBooking(BookingRequest request, ServerCallContext context)
+	{
+		_logger.LogInformation($"Received booking request for user {request.UserId} hotel {request.HotelId}");
+
+		// В реальном приложении здесь была бы логика бизнес-валидации,
+		// взаимодействие с базой данных и расчет цены/скидки.
+
+		var newBooking = await ResolveBooking(request);
 
 		// Подготовка сообщения для Kafka (можно использовать BookingResponse как формат события)
 		var bookingEvent = new BookingResponse
 		{
-			Id = bookingId,
-			UserId = request.UserId,
-			HotelId = request.HotelId,
-			PromoCode = request.PromoCode ?? "",
-			DiscountPercent = 10.0, // Пример расчета
-			Price = 150.00,       // Пример расчета
-			CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(creationTime).ToString() // Используем ISO-8601 строку
+			Id = newBooking.Id.ToString(),
+			UserId = newBooking.UserId,
+			HotelId = newBooking.HotelId,
+			PromoCode = newBooking.PromoCode,
+			DiscountPercent = (double)newBooking.DiscountPercent,
+			Price = (double)newBooking.Price,
+			CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTimeOffset(newBooking.CreatedAt).ToString() // Используем ISO-8601 строку
 		};
 
 		// Отправка сообщения в Kafka асинхронно
