@@ -56,10 +56,10 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			Id = newBooking.Id.ToString(),
 			UserId = newBooking.UserId,
 			HotelId = newBooking.HotelId,
-			PromoCode = newBooking.PromoCode,
+			PromoCode = newBooking.PromoCode ?? "",
 			DiscountPercent = (double)newBooking.DiscountPercent,
 			Price = (double)newBooking.Price,
-			CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTimeOffset(newBooking.CreatedAt).ToString() // Используем ISO-8601 строку
+			CreatedAt = newBooking.CreatedAt.ToString("O")
 		};
 	}
 	// --- Реализация gRPC метода CreateBooking ---
@@ -72,7 +72,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 		var bookingEvent = MapBookingResponse(newBooking);
 
-		await ProduceKafkaMessageAsync("hotel-booking-events", bookingEvent);
+//		await ProduceKafkaMessageAsync("hotel-booking-events", bookingEvent);
 
 		return bookingEvent;
 	}
@@ -110,7 +110,7 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 
 	private async Task<decimal> ResolvePromoDiscountPercent(String promoCode, string userId)
 	{
-		if (promoCode == null)
+		if (String.IsNullOrWhiteSpace(promoCode))
 		{
 			return 0.0m;
 		}
