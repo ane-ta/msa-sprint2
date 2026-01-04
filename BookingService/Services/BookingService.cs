@@ -1,6 +1,7 @@
 using BookingMicroService.Grpc;
 using BookingService.Models;
 using BookingService.Models.MonolothDtos;
+using BookingService.Repositories;
 using Confluent.Kafka;
 using Google.Protobuf;
 using Grpc.Core;
@@ -11,17 +12,19 @@ namespace BookingService.Services;
 
 public class BookingService : BookingMicroService.Grpc.BookingService.BookingServiceBase
 {
+	private readonly BookingRepository _bookingRepo;
 	private readonly UserService _userService;
 	private readonly HotelService _hotelService;
 	private readonly PromoService _promoService;
 	private readonly IConfiguration _configuration;
 	private readonly ILogger<BookingService> _logger;
 
-	public BookingService(UserService userService, HotelService hotelService, PromoService promocodeService, IConfiguration configuration, ILogger<BookingService> logger)
+	public BookingService(BookingRepository bookingRepo, UserService userService, HotelService hotelService, PromoService promoService, IConfiguration configuration, ILogger<BookingService> logger)
 	{
+		_bookingRepo = bookingRepo;
 		_userService = userService;
 		_hotelService = hotelService;
-		_promoService = promocodeService;
+		_promoService = promoService;
 		_configuration = configuration;
 		_logger = logger;
 	}
@@ -46,19 +49,9 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			CreatedAt = DateTimeOffset.Now,
 		};
 	}
-
-	// --- Реализация gRPC метода CreateBooking ---
-	public override async Task<BookingResponse> CreateBooking(BookingRequest request, ServerCallContext context)
+	private BookingResponse MapBookingResponse(Booking newBooking)
 	{
-		_logger.LogInformation($"Received booking request for user {request.UserId} hotel {request.HotelId}");
-
-		// В реальном приложении здесь была бы логика бизнес-валидации,
-		// взаимодействие с базой данных и расчет цены/скидки.
-
-		var newBooking = await ResolveBooking(request);
-
-		// Подготовка сообщения для Kafka (можно использовать BookingResponse как формат события)
-		var bookingEvent = new BookingResponse
+		return new BookingResponse
 		{
 			Id = newBooking.Id.ToString(),
 			UserId = newBooking.UserId,
@@ -68,11 +61,19 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 			Price = (double)newBooking.Price,
 			CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTimeOffset(newBooking.CreatedAt).ToString() // Используем ISO-8601 строку
 		};
+	}
+	// --- Реализация gRPC метода CreateBooking ---
+	public override async Task<BookingResponse> CreateBooking(BookingRequest request, ServerCallContext context)
+	{
+		_logger.LogInformation($"Received booking request for user {request.UserId} hotel {request.HotelId}");
 
-		// Отправка сообщения в Kafka асинхронно
+		var newBooking = await ResolveBooking(request);
+		await _bookingRepo.SaveBooking(newBooking);
+
+		var bookingEvent = MapBookingResponse(newBooking);
+
 		await ProduceKafkaMessageAsync("hotel-booking-events", bookingEvent);
 
-		// Возвращаем ответ gRPC клиенту
 		return bookingEvent;
 	}
 
@@ -121,16 +122,19 @@ public class BookingService : BookingMicroService.Grpc.BookingService.BookingSer
 	}
 
 	// --- Реализация gRPC метода ListBookings (заглушка) ---
-	public override Task<BookingListResponse> ListBookings(BookingListRequest request, ServerCallContext context)
+	public override async Task<BookingListResponse> ListBookings(BookingListRequest request, ServerCallContext context)
 	{
-		// Здесь должна быть логика обращения к БД для получения списка бронирований пользователя
 		_logger.LogInformation($"Received list request for user {request.UserId}");
 
-		// Возвращаем пустой список как заглушку
 		var response = new BookingListResponse();
-		// response.Bookings.Add(...); // Здесь можно добавить реальные данные
-
-		return Task.FromResult(response);
+		var bookings = await _bookingRepo.Get(request.UserId);
+		
+		foreach (var booking in bookings)
+		{
+			response.Bookings.Add(MapBookingResponse(booking));
+		}
+		
+		return response;
 	}
 
 	// --- Метод-помощник для отправки в Kafka ---
