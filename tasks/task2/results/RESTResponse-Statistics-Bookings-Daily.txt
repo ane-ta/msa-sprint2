@@ -1,0 +1,1 @@
+[{"date":"2026-01-05","bookingsCount":2,"totalBookingAmount":180,"averageBookingAmount":90.0000000000000000}]
