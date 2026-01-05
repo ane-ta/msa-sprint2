@@ -9,6 +9,8 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KafkaLibrary", "KafkaLibrary\KafkaLibrary.csproj", "{4287A1A9-0C85-54AE-6AFD-F134C23E7CE4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookingHistoryService", "BookingHistoryService\BookingHistoryService.csproj", "{0849A801-9CE9-E034-7FA4-053F77FB33A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{4287A1A9-0C85-54AE-6AFD-F134C23E7CE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4287A1A9-0C85-54AE-6AFD-F134C23E7CE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4287A1A9-0C85-54AE-6AFD-F134C23E7CE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0849A801-9CE9-E034-7FA4-053F77FB33A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0849A801-9CE9-E034-7FA4-053F77FB33A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0849A801-9CE9-E034-7FA4-053F77FB33A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0849A801-9CE9-E034-7FA4-053F77FB33A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

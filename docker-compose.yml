@@ -11,6 +11,16 @@ services:
     networks:
       - hotelio-net
   
+  booking-history-service:
+    image: ${DOCKER_REGISTRY-}booking-history-service
+    build:
+      context: .
+      dockerfile: BookingHistoryService/Dockerfile
+    ports:
+      - "9091:9090"
+    networks:
+      - hotelio-net
+      
   booking-db:
     image: postgres:15
     container_name: hotelio-booking-db

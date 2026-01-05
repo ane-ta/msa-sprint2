@@ -4,7 +4,6 @@ using BookingService.Services;
 using Confluent.Kafka;
 using KafkaLibrary;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 // !!! ВАЖНО ДЛЯ DOCKER !!! 
 // Разрешаем HTTP/2 без шифрования (TLS) для работы внутри Docker сети.
@@ -31,7 +30,10 @@ builder.Services.AddSingleton<IKafkaProduceService, KafkaStringProduceService>(s
 {
 	var configuration = sp.GetRequiredService<IConfiguration>();
 
-	var config = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
+	var config = new ProducerConfig 
+	{
+		BootstrapServers = configuration["Kafka:BootstrapServers"] 
+	};
 
 	var logger = sp.GetRequiredService<ILogger<KafkaStringProduceService>>();
 
