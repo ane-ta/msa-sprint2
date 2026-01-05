@@ -17,12 +17,20 @@ services:
       DB_NAME: hotelio
       DB_PORT: 5432
       API_URL: http://monolith:8080
+      API_STAT_URL: http://booking-history-service:9090
 
       DB_HOST_BOOKING: booking-db # В Docker Compose имя сервиса 'db' является его хостом
       DB_USER_BOOKING: hotelio
       DB_PASSWORD_BOOKING: hotelio
       DB_NAME_BOOKING: hotelio
       DB_PORT_BOOKING: 5432
+
+      DB_HOST_BOOKING_HISTORY: booking-history-db # В Docker Compose имя сервиса 'db' является его хостом
+      DB_USER_BOOKING_HISTORY: hotelio
+      DB_PASSWORD_BOOKING_HISTORY: hotelio
+      DB_NAME_BOOKING_HISTORY: hotelio
+      DB_PORT_BOOKING_HISTORY: 5432
+
   # booking:
   #   build:
   #     context: ./../../BookingService

@@ -23,6 +23,16 @@ timeout 2 bash -c "</dev/tcp/${DB_HOST_BOOKING}/${DB_PORT_BOOKING}" \
 echo "🧪 Загрузка фикстур в booking service..."
 PGPASSWORD="${DB_PASSWORD_BOOKING}" psql -h "${DB_HOST_BOOKING}" -p "${DB_PORT_BOOKING}" -U "${DB_USER_BOOKING}" "${DB_NAME_BOOKING}" < init-fixtures-booking.sql
 
+# booking history service
+# Проверка соединения
+echo "🧪 Проверка подключения к БД booking-history-service..."
+timeout 2 bash -c "</dev/tcp/${DB_HOST_BOOKING_HISTORY}/${DB_PORT_BOOKING_HISTORY}" \
+  || { echo "❌ Не удалось подключиться к ${DB_HOST_BOOKING_HISTORY}:${DB_PORT_BOOKING_HISTORY}"; exit 1; }
+
+# Загрузка фикстур
+echo "🧪 Загрузка фикстур в booking history service..."
+PGPASSWORD="${DB_PASSWORD_BOOKING_HISTORY}" psql -h "${DB_HOST_BOOKING_HISTORY}" -p "${DB_PORT_BOOKING_HISTORY}" -U "${DB_USER_BOOKING_HISTORY}" "${DB_NAME_BOOKING_HISTORY}" < init-fixtures-booking-history.sql
+
 echo "🧪 Выполнение HTTP-тестов..."
 
 pass() { echo "✅ $1"; }
@@ -140,4 +150,12 @@ curl -s -o /dev/null -w "%{http_code}" -X POST "${BASE}/api/bookings?userId=test
 curl -s -o /dev/null -w "%{http_code}" -X POST "${BASE}/api/bookings?userId=test-user-2&hotelId=test-hotel-2" | grep -q '500' \
   && pass "Отклонено: отель полностью забронирован" \
   || fail "Ошибка: сервер принял бронирование в полностью занятом отеле"
+
+echo ""
+echo "Тесты статистики"
+BASE="${API_STAT_URL:-http://localhost:8080}"
+
+# Получение статистики
+curl -sSf "${BASE}/api/statistics/daily" | grep -q 'bookingsCount' && pass "Статистика получена" || fail "статистика не получена"
+
 echo "✅ Все HTTP-тесты пройдены!"
