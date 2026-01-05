@@ -37,7 +37,7 @@ namespace KafkaLibrary
 						// Опрашиваем Kafka на предмет новых сообщений (таймаут 100 мс)
 						var consumeResult = _consumer.Consume(cancellationToken);
 
-						ProcessMessage(consumeResult);
+						ProcessMessage(consumeResult).Wait(cancellationToken);
 					}
 					catch (ConsumeException e)
 					{
