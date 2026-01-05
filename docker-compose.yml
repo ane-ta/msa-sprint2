@@ -16,6 +16,8 @@ services:
     build:
       context: .
       dockerfile: BookingHistoryService/Dockerfile
+    depends_on:
+      - booking-history-db
     ports:
       - "9091:9090"
     networks:
@@ -35,8 +37,23 @@ services:
     networks:
       - hotelio-net
 
+  booking-history-db:
+    image: postgres:15
+    container_name: hotelio-booking-history-db
+    environment:
+      POSTGRES_USER: hotelio
+      POSTGRES_PASSWORD: hotelio
+      POSTGRES_DB: hotelio
+    ports:
+      - "5440:5432"
+    volumes:
+      - hotelio-booking-history-db-data:/var/lib/postgresql/data
+    networks:
+      - hotelio-net
+
 volumes:
   hotelio-booking-db-data:
+  hotelio-booking-history-db-data:
 
 networks:
   hotelio-net:
