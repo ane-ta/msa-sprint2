@@ -15,6 +15,9 @@ builder.Services.AddSingleton<IKafkaConsumeService, KafkaStringConsumeService>(s
 {
 	var configuration = sp.GetRequiredService<IConfiguration>();
 
+	ArgumentNullException.ThrowIfNullOrWhiteSpace(configuration["Kafka:GroupId"], "Kafka:GroupId");
+	ArgumentNullException.ThrowIfNullOrWhiteSpace(configuration["Kafka:BootstrapServers"], "Kafka:BootstrapServers");
+
 	var config = new ConsumerConfig
 	{
 		GroupId = configuration["Kafka:GroupId"],

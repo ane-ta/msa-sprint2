@@ -14,7 +14,9 @@ namespace KafkaLibrary
 		public KafkaStringConsumeService(ConsumerConfig config, ILogger<KafkaStringConsumeService> logger)
 		{
 			_logger = logger;
-
+			
+			config.EnableAutoCommit = false;
+			
 			var consumerBuilder = new ConsumerBuilder<Null, string>(config);
 
 			_consumer = consumerBuilder.Build();
