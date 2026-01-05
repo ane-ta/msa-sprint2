@@ -3,6 +3,7 @@ using BookingHistoryService.Services;
 using Confluent.Kafka;
 using KafkaLibrary;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 // !!! ВАЖНО ДЛЯ DOCKER !!! 
 // Разрешаем HTTP/2 без шифрования (TLS) для работы внутри Docker сети.
@@ -17,8 +18,9 @@ builder.Services.AddDbContext<BookingHistoryContext>(options =>
 	options.UseNpgsql(
 		builder.Configuration.GetConnectionString("DefaultConnection")
 ));
-
+builder.Services.AddControllers();
 builder.Services.AddTransient<BookingHistoryService.Services.BookingHistoryService>();
+builder.Services.AddTransient<StatisticsService>();
 builder.Services.AddSingleton<IKafkaConsumeService, KafkaStringConsumeService>(sp =>
 {
 	var configuration = sp.GetRequiredService<IConfiguration>();
@@ -36,13 +38,12 @@ builder.Services.AddSingleton<IKafkaConsumeService, KafkaStringConsumeService>(s
 
 	var logger = sp.GetRequiredService<ILogger<KafkaStringConsumeService>>();
 	var service = sp.GetRequiredService<BookingHistoryService.Services.BookingHistoryService>();
-
+	
 	var consumer = new KafkaStringConsumeService(config, logger);
 	consumer.OnMessageReceived += async (key, value) =>
 	{
 		//Console.WriteLine($"Received message: Key='{key}', Value='{value}'");
 		await service.ProcessKafkaMessage(value);
-		await Task.CompletedTask;
 	};
 
 	return consumer;
@@ -50,11 +51,22 @@ builder.Services.AddSingleton<IKafkaConsumeService, KafkaStringConsumeService>(s
 
 builder.Services.AddHostedService<KafkaConsumeBackgroundService>();
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+	serverOptions.ConfigureEndpointDefaults(listenOptions =>
+	{
+		listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+	});
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<GreeterService>();
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+
+app.UseRouting();
+app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
