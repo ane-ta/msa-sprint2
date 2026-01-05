@@ -18,6 +18,7 @@ builder.Services.AddDbContext<BookingHistoryContext>(options =>
 		builder.Configuration.GetConnectionString("DefaultConnection")
 ));
 
+builder.Services.AddTransient<BookingHistoryService.Services.BookingHistoryService>();
 builder.Services.AddSingleton<IKafkaConsumeService, KafkaStringConsumeService>(sp =>
 {
 	var configuration = sp.GetRequiredService<IConfiguration>();
@@ -34,12 +35,13 @@ builder.Services.AddSingleton<IKafkaConsumeService, KafkaStringConsumeService>(s
 	};
 
 	var logger = sp.GetRequiredService<ILogger<KafkaStringConsumeService>>();
+	var service = sp.GetRequiredService<BookingHistoryService.Services.BookingHistoryService>();
 
 	var consumer = new KafkaStringConsumeService(config, logger);
 	consumer.OnMessageReceived += async (key, value) =>
 	{
-		Console.WriteLine($"Received message: Key='{key}', Value='{value}'");
-		
+		//Console.WriteLine($"Received message: Key='{key}', Value='{value}'");
+		await service.ProcessKafkaMessage(value);
 		await Task.CompletedTask;
 	};
 
