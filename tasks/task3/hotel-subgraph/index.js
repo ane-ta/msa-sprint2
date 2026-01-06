@@ -3,6 +3,12 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import gql from 'graphql-tag';
 
+// Имитация данных (замените на реальную БД/gRPC позже)
+const hotels = [
+  { id: "h1", name: "Grand Hyatt", city: "New York", stars: 5 },
+  { id: "h2", name: "Budget Inn", city: "Springfield", stars: 2 },
+];
+
 const typeDefs = gql`
   type Hotel @key(fields: "id") {
     id: ID!
@@ -20,11 +26,14 @@ const resolvers = {
   Hotel: {
     __resolveReference: async ({ id }) => {
       // TODO: Реальный вызов к hotel-сервису или заглушка
+      console.log(`[Hotel Service] Resolving reference for hotel ID: ${id}`);
+      return hotels.find(h => h.id === id);
     },
   },
   Query: {
     hotelsByIds: async (_, { ids }) => {
       // TODO: Заглушка или REST-запрос
+      return hotels.filter(h => ids.includes(h.id));
     },
   },
 };
