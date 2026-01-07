@@ -13,7 +13,8 @@ const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
       { name: 'booking', url: 'http://booking-subgraph:4001/graphql' }, 
-      { name: 'hotel', url: 'http://hotel-subgraph:4002/graphql' }   
+      { name: 'hotel', url: 'http://hotel-subgraph:4002/graphql' },
+      { name: 'promo', url: 'http://promo-subgraph:4003/graphql' }   
     ],
   }),
   buildService({ name, url }) {

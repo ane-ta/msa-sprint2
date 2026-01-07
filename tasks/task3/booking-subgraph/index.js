@@ -4,6 +4,10 @@ import { buildSubgraphSchema } from '@apollo/subgraph';
 import gql from 'graphql-tag';
 
 const typeDefs = gql`
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7",
+        import: ["@key", "@shareable", "@inaccessible", "@override", "@requires", "@external"])
+
   extend type Hotel @key(fields: "id") {
     id: ID! @external
   }
@@ -11,8 +15,9 @@ const typeDefs = gql`
     id: ID!
     userId: String!
     hotelId: String!
+
     promoCode: String
-    discountPercent: Int
+    discountPercent: Int!
 
     hotel: Hotel
   }
@@ -24,9 +29,9 @@ const typeDefs = gql`
 `;
 
 const mockBookings = [
-  { id: "b1", userId: "user1", hotelId: "h1", discountPercent: 10 },
+  { id: "b1", userId: "user1", hotelId: "h1", promoCode:"SUMMER_10", discountPercent: 10 },
   { id: "b2", userId: "user1", hotelId: "h2", discountPercent: 0 },
-  { id: "b3", userId: "user2", hotelId: "h1", discountPercent: 20 },
+  { id: "b3", userId: "user2", hotelId: "h1", promoCode:"WINTER_20",discountPercent: 20 },
 ];
 
 const resolvers = {

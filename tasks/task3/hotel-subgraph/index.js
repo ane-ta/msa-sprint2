@@ -10,6 +10,10 @@ const hotels = [
 ];
 
 const typeDefs = gql`
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7",
+        import: ["@key", "@shareable", "@inaccessible", "@override", "@requires", "@external"])
+
   type Hotel @key(fields: "id") {
     id: ID!
     name: String
