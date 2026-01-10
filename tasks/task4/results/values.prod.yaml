@@ -1,0 +1,8 @@
+replicaCount: 3
+
+image:
+  pullPolicy: IfNotPresent
+
+env:
+  - name: "ENABLE_FEATURE_X"
+    value: "false"

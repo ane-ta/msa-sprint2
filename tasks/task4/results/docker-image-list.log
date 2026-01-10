@@ -1,0 +1,12 @@
+IMAGE                                             ID             DISK USAGE   CONTENT SIZE   EXTRA
+gcr.io/k8s-minikube/storage-provisioner:v5        6e38f40d628d       31.5MB             0B   U    
+hotelio-booking-service:latest                    56a98feeb27d       20.6MB             0B        
+registry.k8s.io/coredns/coredns:v1.12.1           52546a367cc9         75MB             0B   U    
+registry.k8s.io/e2e-test-images/agnhost:2.39      a05bd3a9140b        127MB             0B        
+registry.k8s.io/e2e-test-images/agnhost:2.53      b3167efc6894        139MB             0B   U    
+registry.k8s.io/etcd:3.6.4-0                      5f1f5298c888        195MB             0B   U    
+registry.k8s.io/kube-apiserver:v1.34.0            90550c43ad2b         88MB             0B   U    
+registry.k8s.io/kube-controller-manager:v1.34.0   a0af72f2ec6d       74.9MB             0B   U    
+registry.k8s.io/kube-proxy:v1.34.0                df0860106674       71.9MB             0B   U    
+registry.k8s.io/kube-scheduler:v1.34.0            46169d968e92       52.8MB             0B   U    
+registry.k8s.io/pause:3.10.1                      cd073f4c5f6a        736kB             0B   U    
