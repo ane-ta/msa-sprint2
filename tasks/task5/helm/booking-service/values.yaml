@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  name: hotelio-booking-service
+  tag: latest
+  pullPolicy: IfNotPresent  # Политика скачивания образа (IfNotPresent для локальной работы в Minikube)
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+env: 
+  - name: "ENABLE_FEATURE_X"
+    value: "false" 
+
+resources:
+  limits:
+    cpu: 200m   # 200 милли-ядер CPU
+    memory: 256Mi # 256 мегабайт RAM
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  
+livenessProbe:
+  path: /ping
+
+readinessProbe:
+  path: /ping
