@@ -1,0 +1,38 @@
+appName: booking-service
+
+image:
+  name: hotelio-booking-service
+  pullPolicy: Never 
+  version: l2
+
+# Конфигурация для обеих версий
+versions:
+  stable:
+    tag: v1
+    replicas: 1
+    isErrorPossible: "true"
+  canary:
+    tag: v2
+    replicas: 1
+    isErrorPossible: "false"
+  
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+env: 
+
+resources:
+  limits:
+    cpu: 200m   # 200 милли-ядер CPU
+    memory: 256Mi # 256 мегабайт RAM
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  
+livenessProbe:
+  path: /ping
+
+readinessProbe:
+  path: /health-status
