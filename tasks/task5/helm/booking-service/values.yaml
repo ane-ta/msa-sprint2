@@ -3,15 +3,18 @@ appName: booking-service
 image:
   name: hotelio-booking-service
   pullPolicy: Never 
+  version: l2
 
 # Конфигурация для обеих версий
 versions:
   stable:
-    tag: v1 
+    tag: v1
     replicas: 1
+    isErrorPossible: "true"
   canary:
-    tag: v2 
+    tag: v2
     replicas: 1
+    isErrorPossible: "false"
   
 service:
   type: ClusterIP
@@ -32,4 +35,4 @@ livenessProbe:
   path: /ping
 
 readinessProbe:
-  path: /ping
+  path: /health-status
