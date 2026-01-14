@@ -28,6 +28,7 @@ COPY check-dns.sh check-status.sh ./
 # Делаем скрипт исполняемым
 RUN chmod +x check-dns.sh check-status.sh
 
+ENV APP_VERSION=""
 # Информируем Docker о том, что сервис слушает порт 8080
 EXPOSE 8080
 

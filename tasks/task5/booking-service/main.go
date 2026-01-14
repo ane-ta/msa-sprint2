@@ -7,21 +7,42 @@ import (
 	"os"
 )
 
+var appVersion = os.Getenv("APP_VERSION")
+
+func IsVersionXFeatureEnabled() bool {
+	return appVersion == "v2"
+}
+
 func main() {
-	enableFeatureX := os.Getenv("ENABLE_FEATURE_X") == "true"
+
+	if appVersion == "" {
+		appVersion = "unknown"
+	}
 
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "pong")
 	})
 
-	// TODO: Feature flag route
-	// if ENABLE_FEATURE_X=true, expose /feature
-	if enableFeatureX {
-		http.HandleFunc("/feature", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "Feature X is enabled!")
-		})
-	}
+	http.HandleFunc("/feature", func(w http.ResponseWriter, r *http.Request) {
+		
+		response := fmt.Sprintf("Version: %s", appVersion)
 
-	log.Println("Server running on :8080")
+		if  IsVersionXFeatureEnabled() == true {
+
+			featureEnabledHeader := r.Header.Get("X-Feature-Enabled")
+
+			if featureEnabledHeader == "true" {
+				response += " | Feature Status: Enabled for request"
+			} else {
+				response += " | Feature Status: Disabled for request"
+			}
+		} else {
+				response += " | Feature Status: Disabled"
+		
+		}
+		fmt.Fprintf(w, response + "\n")
+	})
+
+	fmt.Printf("Service starting version %s on :8080\n", appVersion)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
