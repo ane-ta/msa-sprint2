@@ -34,15 +34,33 @@ spec:
   hosts:
   - {{ .Values.appName }}
   http:
-  - route:
+  - # --- ПРАВИЛО 1: Маршрут по фича-флагу (X-Feature-Enabled: true) ---
+    match:
+    - headers:
+        X-Feature-Enabled:
+          exact: "true" # Если заголовок X-Feature-Enabled равен "true"
+    route:
     - destination:
         host: {{ .Values.appName }}
-        subset: stable
-      weight: 90
+        subset: canary # Весь трафик идет на V2
+      weight: 100
+
+  - # --- ПРАВИЛО 2: Маршрут по умолчанию (Остальной трафик) ---
+    route:
     - destination:
         host: {{ .Values.appName }}
-        subset: canary
-      weight: 10
+        subset: stable # Весь остальной трафик идет на V1
+      weight: 100
+
+  # - route:
+  #   - destination:
+  #       host: {{ .Values.appName }}
+  #       subset: stable
+  #     weight: 90
+  #   - destination:
+  #       host: {{ .Values.appName }}
+  #       subset: canary
+  #     weight: 10
 
   retries:
     attempts: 3
