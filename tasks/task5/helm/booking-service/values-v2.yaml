@@ -1,8 +1,0 @@
-replicaCount: 1
-
-image:
-  pullPolicy: Never
-
-env: 
-  - name: "ENABLE_FEATURE_X"
-    value: "true" 

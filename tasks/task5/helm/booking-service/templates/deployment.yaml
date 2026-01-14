@@ -1,46 +1,54 @@
+{{- range $versionName, $versionConfig := .Values.versions }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ $.Values.appName }}-{{ $versionName }}
   labels:
-    app: {{ .Release.Name }}
+    app: {{ $.Values.appName }} 
+    version: {{ $versionName }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ $versionConfig.replicas }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
+      app: {{ $.Values.appName }}
+      version: {{ $versionName }}      
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        app: {{ $.Values.appName }}
+        version: {{ $versionName }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ $.Chart.Name }}-{{ $versionName }}
+          image: "{{ $.Values.image.name }}:{{ $versionConfig.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
 
           ports:
-            - containerPort: {{ .Values.service.targetPort }}
+            - containerPort: {{ $.Values.service.targetPort }}
 
           env:
-          {{- range .Values.env }}
+          {{- range $.Values.env }}
             - name: {{ .name }}
               value: {{ .value | quote }}
           {{- end }}
+           - name: "APP_VERSION"
+             value: "{{ $versionConfig.tag }}"
 
           livenessProbe:
             httpGet:
-              path: {{ .Values.livenessProbe.path }}
-              port: {{ .Values.service.targetPort }}
+              path: {{ $.Values.livenessProbe.path }}
+              port: {{ $.Values.service.targetPort }}
             initialDelaySeconds: 10
             periodSeconds: 10
           
           readinessProbe:
             httpGet:
-              path: {{ .Values.readinessProbe.path }}
-              port: {{ .Values.service.targetPort }}
+              path: {{ $.Values.readinessProbe.path }}
+              port: {{ $.Values.service.targetPort }}
             initialDelaySeconds: 5
             periodSeconds: 5
 
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml $.Values.resources | nindent 12 }}
+---
+{{- end }}

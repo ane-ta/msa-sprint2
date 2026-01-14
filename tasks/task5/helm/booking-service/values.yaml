@@ -1,18 +1,24 @@
-replicaCount: 1
+appName: booking-service
 
 image:
   name: hotelio-booking-service
-  tag: latest
-  pullPolicy: IfNotPresent  # Политика скачивания образа (IfNotPresent для локальной работы в Minikube)
+  pullPolicy: Never 
 
+# Конфигурация для обеих версий
+versions:
+  stable:
+    tag: v1 
+    replicas: 1
+  canary:
+    tag: v2 
+    replicas: 1
+  
 service:
   type: ClusterIP
   port: 80
   targetPort: 8080
 
 env: 
-  - name: "ENABLE_FEATURE_X"
-    value: "false" 
 
 resources:
   limits:
