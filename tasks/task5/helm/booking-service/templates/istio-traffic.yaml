@@ -11,6 +11,20 @@ spec:
   - name: canary
     labels:
       version: canary
+
+trafficPolicy:
+  connectionPool:
+    tcp:
+      maxConnections: 100 # Максимум одновременных TCP-соединений к каждому поду
+    http:
+      http1MaxPendingRequests: 10 # Максимум  ожидающих HTTP/1.1 запросов в очереди
+      maxRequestsPerConnection: 1 # Максимум запросов на соединение (для быстрой перебалансировки)
+  outlierDetection:
+    consecutive5xxErrors: 5 # После 5 последовательных 5xx ошибок
+    interval: 30s           # Проверять каждые 30 секунд
+    baseEjectionTime: 5m    # "Изгнать" (исключить из балансировки) проблемный под на 5 минут
+    maxEjectionPercent: 50  # Исключить не более 50% подов одновременно
+
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
