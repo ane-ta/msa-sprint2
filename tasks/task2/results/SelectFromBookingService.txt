@@ -1,0 +1,5 @@
+"Id"	"UserId"	"HotelId"	"PromoCode"	"DiscountPercent"	"CreatedAt"	"Price"
+82	"test-user-2"	"test-hotel-1"	"TESTCODE1"	10.0	"2026-01-05 16:48:44.907725+00"	90.0
+83	"test-user-3"	"test-hotel-1"		0.0	"2026-01-05 16:48:44.907725+00"	80.0
+84	"test-user-3"	"test-hotel-1"		0.0	"2026-01-05 16:48:53.667499+00"	80.00
+85	"test-user-2"	"test-hotel-1"	"TESTCODE1"	0	"2026-01-05 16:48:55.035086+00"	100.0

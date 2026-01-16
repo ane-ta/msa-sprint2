@@ -1,0 +1,13 @@
+1. Явно указано использовать синтаксиc Federation 2.7
+во всех субграфах
+2. Проброшен http заголовок userId через gateway
+3. Субграфы возвращают мок-данные
+4. Добавлен promo-subgraph
+5. Доработан booking-subgraph.bookingsByUser
+- ACL на входе
+- ответ расширен 
+-- типом Hotel из hotel-subgraph
+-- типом PromoInfo из promo-subgraph
+-- поле discountPercent перегружено promo-subgraph
+6. Доработан hotel-subgraph
+- загрузка данных об отелях через dataloader решает проблему N+1

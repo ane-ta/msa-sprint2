@@ -1,0 +1,11 @@
+ *  Executing task: & 'C:\Program Files\Docker\Docker\resources\bin\docker.EXE' logs --tail 1000 -f bfec16dd1d4084f2e14e5f2ac36eddfb99302646405af87c69075a141954751c 
+
+Enabling inline tracing for this subgraph. To disable, use ApolloServerPluginInlineTraceDisabled.
+✅ Booking subgraph ready at http://localhost:4001/
+ACL PASSED for user: user1. Proceeding with gRPC call.
+ACL FAILED for user: user1
+ACL FAILED for user: user1
+ACL PASSED for user: user1. Proceeding with gRPC call.
+ACL PASSED for user: user1. Proceeding with gRPC call.
+ACL FAILED for user: user1
+ACL PASSED for user: user1. Proceeding with gRPC call.

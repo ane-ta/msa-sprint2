@@ -1,0 +1,91 @@
+@startuml
+title Hotelio Context Diagram
+
+Top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+System_Ext(sysApp, "Client App")
+System_Ext(sysPartners, "Partners Integrations")
+
+'monolyth
+System(sysHotelio, "Hotelio")
+Container_Boundary(sysHotelio, ""){
+    ContainerDb(cntDbBooking, "DB", "PostgreSQL", "Stores data"){
+    }
+    ContainerDb(cntDbUsers, "DB", "PostgreSQL", "Stores data\n")
+    ContainerDb(cntDbHotels, "DB", "PostgreSQL", "Stores data\n")
+    ContainerDb(cntDbPromocodes, "DB", "PostgreSQL", "Stores data\n"){
+    }
+    ContainerDb(cntDbReviews, "DB", "PostgreSQL", "Stores data\n")
+
+    Container(cntBFFX, "BFF-X","", "Manages API calls for X frontend client")
+    Container(cntBFFY, "BFF-Y","", "Manages API calls for Y frontend client")
+    Container(cntPartnersService, "Integration Service", "", "Manages API calls for Partners integrations")
+    Container(cntAPIGateway, "API Gateway")
+
+    Container(cntIdentityService, "IdentityService", "", "Manages user authentication and access rights")
+    System(sysHotelioLogic, "Business logic services")
+    Container_Boundary(sysHotelioLogic,""){
+        Container(cntBooking, "Booking Service", "", "Manages bookings")
+        Container(cntUsers, "User Service", "", "Manages user accounts")
+        Container(cntHotels, "Hotel Service", "", "Manages hotel data")
+        Container(cntPromocodes, "Promocode Service", "", "Manages promocodes")
+        Container(cntReviews, "Review Service", "", "Manages reviews")
+    }
+    Container(cntBroker, "Event Bus", "Kafka", "Handles messages delivering\n                                                                                                                                            ")
+}
+
+Lay_Right(cntDbBooking,cntDbUsers)
+Lay_Right(cntDbUsers,cntDbHotels)
+Lay_Right(cntDbHotels,cntDbPromocodes)
+Lay_Right(cntDbPromocodes,cntDbReviews)
+
+Lay_Right(cntBooking,cntUsers)
+Lay_Right(cntUsers,cntHotels)
+Lay_Right(cntHotels,cntPromocodes)
+Lay_Right(cntPromocodes,cntReviews)
+
+'external
+Rel_Down(sysApp, cntAPIGateway, "GraphQL")
+Rel_Down(sysApp, cntIdentityService, "Gets\nJWT-token")
+Rel_Down(sysPartners, cntIdentityService, "Gets\nJWT-token")
+Rel_Down(sysPartners, cntAPIGateway, "REST API\ncalls")
+
+'broker
+Rel(cntIdentityService, cntBroker, "Publishes")
+Rel(cntBooking, cntBroker, "Interacts")
+Rel(cntUsers, cntBroker, "Interacts")
+Rel(cntHotels, cntBroker, "Interacts")
+Rel(cntPromocodes, cntBroker, "Interacts")
+Rel(cntReviews, cntBroker, "Interacts")
+
+'bff
+Rel_Left(cntAPIGateway, cntIdentityService, "Checks\nauthorization")
+Rel(cntAPIGateway, cntBFFX, "Redirects\nGraphQL")
+Rel(cntAPIGateway, cntBFFY, "Redirects")
+Rel(cntAPIGateway, cntPartnersService, "Redirects\nREST API")
+
+Rel(cntPartnersService, sysHotelioLogic, "gRPC\ncalls")
+Rel(cntBFFX, sysHotelioLogic, "gRPC\ncalls")
+Rel(cntBFFY, sysHotelioLogic, "gRPC\ncalls")
+
+' Rel(cntPartnersService, cntBooking, "gRPC\ncalls")
+' Rel(cntPartnersService, cntUsers, "gRPC\ncalls")
+' Rel(cntPartnersService, cntHotels, "gRPC\ncalls")
+' Rel(cntPartnersService, cntPromocodes, "gRPC\ncalls")
+' Rel(cntPartnersService, cntReviews, "gRPC\ncalls")
+
+' Rel(cntBFF, cntBooking, "gRPC\ncalls")
+' Rel(cntBFF, cntUsers, "gRPC\ncalls")
+' Rel(cntBFF, cntHotels, "gRPC\ncalls")
+' Rel(cntBFF, cntPromocodes, "gRPC\ncalls")
+' Rel(cntBFF, cntReviews, "gRPC\ncalls")
+
+'db
+Rel_Up(cntBooking, cntDbBooking, "Reads/Writes\ndata")
+Rel_Up(cntUsers, cntDbUsers, "Reads/Writes\ndata")
+Rel_Up(cntHotels, cntDbHotels, "Reads/Writes\ndata")
+Rel_Up(cntPromocodes, cntDbPromocodes, "Reads/Writes\ndata")
+Rel_Up(cntReviews, cntDbReviews, "Reads/Writes\ndata")
+@enduml

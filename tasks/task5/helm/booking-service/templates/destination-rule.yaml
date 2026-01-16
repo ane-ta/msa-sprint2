@@ -1,0 +1,26 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: {{ .Values.appName }}-destination-rule
+spec:
+  host: {{ .Values.appName }}
+  subsets:
+  - name: stable
+    labels:
+      version: stable
+  - name: canary
+    labels:
+      version: canary
+
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100 # Максимум X одновременных TCP-соединений к каждому поду
+      http:
+        http1MaxPendingRequests: 10 # Максимум X ожидающих HTTP/1.1 запросов в очереди
+        maxRequestsPerConnection: 1 # Максимум X запросов на соединение (для быстрой перебалансировки)
+    outlierDetection:
+      consecutive5xxErrors: 11 # После X последовательных 5xx ошибок
+      interval: 5s           # Проверять каждые X секунд
+      baseEjectionTime: 10s    # "Изгнать" (исключить из балансировки) проблемный под на X минут
+      maxEjectionPercent: 100  # Исключить не более X% подов одновременно

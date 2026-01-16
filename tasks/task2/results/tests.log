@@ -1,0 +1,63 @@
+hotelio-tests  | 🏁 Регрессионный тест до миграции Hotelio
+hotelio-tests  | 🧪 Проверка подключения к БД монолита...
+hotelio-tests  | 🧪 Загрузка фикстур в монолит...
+hotelio-tests  | DELETE 4
+hotelio-tests  | DELETE 3
+hotelio-tests  | DELETE 12
+hotelio-tests  | DELETE 3
+hotelio-tests  | INSERT 0 4
+hotelio-tests  | INSERT 0 3
+hotelio-tests  | INSERT 0 12
+hotelio-tests  | INSERT 0 3
+hotelio-tests  | 🧪 Проверка подключения к БД booking-service...
+hotelio-tests  | 🧪 Загрузка фикстур в booking service...
+hotelio-tests  | DELETE 4
+hotelio-tests  | INSERT 0 2
+hotelio-tests  | 🧪 Проверка подключения к БД booking-history-service...
+hotelio-tests  | 🧪 Загрузка фикстур в booking history service...
+hotelio-tests  | DELETE 2
+hotelio-tests  | 🧪 Выполнение HTTP-тестов...
+hotelio-tests  |
+hotelio-tests  | Тесты пользователей...
+hotelio-tests  | ✅ Получение test-user-1 по ID работает
+hotelio-tests  | ✅ Статус test-user-1: ACTIVE
+hotelio-tests  | ✅ test-user-1 в блэклисте
+hotelio-tests  | ✅ test-user-1 активен
+hotelio-tests  | ✅ test-user-1 не авторизован (в блэклисте)
+hotelio-tests  | ✅ test-user-3 — VIP-пользователь
+hotelio-tests  | ✅ test-user-2 авторизован
+hotelio-tests  |
+hotelio-tests  | Тесты отелей...
+hotelio-tests  | ✅ test-hotel-1 получен по ID
+hotelio-tests  | ✅ test-hotel-1 работает
+hotelio-tests  | ✅ test-hotel-3 не работает
+hotelio-tests  | ✅ test-hotel-2 полностью забронирован
+hotelio-tests  | ✅ Поиск отелей в Сеуле работает
+hotelio-tests  | ✅ Топ-отели в Сеуле загружены
+hotelio-tests  |
+hotelio-tests  | Тесты ревью...
+hotelio-tests  | ✅ Отзывы test-hotel-1 найдены
+hotelio-tests  | ✅ test-hotel-1 признан надёжным
+hotelio-tests  | ✅ test-hotel-3 НЕ признан надёжным (ожидаемо)
+hotelio-tests  |
+hotelio-tests  | Тесты промокодов...
+hotelio-tests  | ✅ Промокод TESTCODE1 найден
+hotelio-tests  | ✅ VIP-промо доступен VIP
+hotelio-tests  | ✅ VIP-промо недоступен обычному
+hotelio-tests  | ✅ Обычный промо доступен
+hotelio-tests  | ✅ Истекший промо недоступен
+hotelio-tests  | ✅ POST /validate промо прошёл
+hotelio-tests  |
+hotelio-tests  | Тесты бронирования...
+hotelio-tests  | ✅ Все бронирования получены
+hotelio-tests  | ✅ Бронирования test-user-2 найдены
+hotelio-tests  | ✅ Бронирование прошло (без промо)
+hotelio-tests  | ✅ Бронирование с промо прошло
+hotelio-tests  | ✅ Отклонено: неактивный пользователь
+hotelio-tests  | ✅ Отклонено: недоверенный отель
+hotelio-tests  | ✅ Отклонено: отель полностью забронирован
+hotelio-tests  |
+hotelio-tests  | Тесты статистики
+hotelio-tests  | ✅ Статистика получена
+hotelio-tests  | ✅ Все HTTP-тесты пройдены!
+hotelio-tests exited with code 0

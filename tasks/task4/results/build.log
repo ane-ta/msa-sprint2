@@ -1,0 +1,25 @@
+[+] Building 2.1s (18/18) FINISHED                                                         docker:default
+ => [internal] load build definition from Dockerfile                                                 0.1s
+ => => transferring dockerfile: 1.68kB                                                               0.0s
+ => [internal] load metadata for docker.io/library/alpine:latest                                     1.8s
+ => [internal] load metadata for docker.io/library/golang:1.21-alpine                                1.7s
+ => [auth] library/alpine:pull token for registry-1.docker.io                                        0.0s
+ => [auth] library/golang:pull token for registry-1.docker.io                                        0.0s
+ => [internal] load .dockerignore                                                                    0.0s
+ => => transferring context: 2B                                                                      0.0s
+ => [builder 1/4] FROM docker.io/library/golang:1.21-alpine@sha256:2414035b086e3c42b99654c8b26e6f5b  0.0s
+ => [stage-1 1/6] FROM docker.io/library/alpine:latest@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2  0.0s
+ => [internal] load build context                                                                    0.1s
+ => => transferring context: 147B                                                                    0.1s
+ => CACHED [stage-1 2/6] RUN apk add --no-cache curl                                                 0.0s
+ => CACHED [stage-1 3/6] WORKDIR /app                                                                0.0s
+ => CACHED [builder 2/4] WORKDIR /app                                                                0.0s
+ => CACHED [builder 3/4] COPY booking-service/main.go .                                              0.0s
+ => CACHED [builder 4/4] RUN go build -o booking-service main.go                                     0.0s
+ => CACHED [stage-1 4/6] COPY --from=builder /app/booking-service .                                  0.0s
+ => CACHED [stage-1 5/6] COPY check-dns.sh check-status.sh ./                                        0.0s
+ => CACHED [stage-1 6/6] RUN chmod +x check-dns.sh check-status.sh                                   0.0s
+ => exporting to image                                                                               0.0s
+ => => exporting layers                                                                              0.0s
+ => => writing image sha256:56a98feeb27d6bc2e22441ca831f03d09c4786c82748e2a011fcd22e4750e01f         0.0s
+ => => naming to docker.io/library/hotelio-booking-service:latest                                    0.0s

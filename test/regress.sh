@@ -3,14 +3,35 @@ set -euo pipefail
 
 echo "🏁 Регрессионный тест до миграции Hotelio"
 
+# monolith
 # Проверка соединения
-echo "🧪 Проверка подключения к БД..."
+echo "🧪 Проверка подключения к БД монолита..."
 timeout 2 bash -c "</dev/tcp/${DB_HOST}/${DB_PORT}" \
   || { echo "❌ Не удалось подключиться к ${DB_HOST}:${DB_PORT}"; exit 1; }
 
 # Загрузка фикстур
-echo "🧪 Загрузка фикстур..."
+echo "🧪 Загрузка фикстур в монолит..."
 PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" "${DB_NAME}" < init-fixtures.sql
+
+# booking service
+# Проверка соединения
+echo "🧪 Проверка подключения к БД booking-service..."
+timeout 2 bash -c "</dev/tcp/${DB_HOST_BOOKING}/${DB_PORT_BOOKING}" \
+  || { echo "❌ Не удалось подключиться к ${DB_HOST_BOOKING}:${DB_PORT_BOOKING}"; exit 1; }
+
+# Загрузка фикстур
+echo "🧪 Загрузка фикстур в booking service..."
+PGPASSWORD="${DB_PASSWORD_BOOKING}" psql -h "${DB_HOST_BOOKING}" -p "${DB_PORT_BOOKING}" -U "${DB_USER_BOOKING}" "${DB_NAME_BOOKING}" < init-fixtures-booking.sql
+
+# booking history service
+# Проверка соединения
+echo "🧪 Проверка подключения к БД booking-history-service..."
+timeout 2 bash -c "</dev/tcp/${DB_HOST_BOOKING_HISTORY}/${DB_PORT_BOOKING_HISTORY}" \
+  || { echo "❌ Не удалось подключиться к ${DB_HOST_BOOKING_HISTORY}:${DB_PORT_BOOKING_HISTORY}"; exit 1; }
+
+# Загрузка фикстур
+echo "🧪 Загрузка фикстур в booking history service..."
+PGPASSWORD="${DB_PASSWORD_BOOKING_HISTORY}" psql -h "${DB_HOST_BOOKING_HISTORY}" -p "${DB_PORT_BOOKING_HISTORY}" -U "${DB_USER_BOOKING_HISTORY}" "${DB_NAME_BOOKING_HISTORY}" < init-fixtures-booking-history.sql
 
 echo "🧪 Выполнение HTTP-тестов..."
 
@@ -101,7 +122,7 @@ echo ""
 echo "Тесты бронирования..."
 
 # 1. Получение всех бронирований
-curl -sSf "${BASE}/api/bookings" | grep -q 'test-user-2' && pass "Все бронирования получены" || fail "Бронирования не получены"
+curl -sSf "${BASE}/api/bookings?userId=" | grep -q 'test-user-2' && pass "Все бронирования получены" || fail "Бронирования не получены"
 
 # 2. Получение бронирований пользователя
 curl -sSf "${BASE}/api/bookings?userId=test-user-2" | grep -q 'test-user-2' && pass "Бронирования test-user-2 найдены" || fail "Нет бронирований test-user-2"
@@ -129,4 +150,12 @@ curl -s -o /dev/null -w "%{http_code}" -X POST "${BASE}/api/bookings?userId=test
 curl -s -o /dev/null -w "%{http_code}" -X POST "${BASE}/api/bookings?userId=test-user-2&hotelId=test-hotel-2" | grep -q '500' \
   && pass "Отклонено: отель полностью забронирован" \
   || fail "Ошибка: сервер принял бронирование в полностью занятом отеле"
+
+echo ""
+echo "Тесты статистики"
+BASE="${API_STAT_URL:-http://localhost:8080}"
+
+# Получение статистики
+curl -sSf "${BASE}/api/statistics/daily" | grep -q 'bookingsCount' && pass "Статистика получена" || fail "статистика не получена"
+
 echo "✅ Все HTTP-тесты пройдены!"
