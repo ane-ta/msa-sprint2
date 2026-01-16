@@ -19,10 +19,12 @@ Container_Boundary(sysHotelio, ""){
     }
     ContainerDb(cntDbReviews, "DB", "PostgreSQL", "Stores data\n")
 
-    Container(cntBFF, "BFF","", "Manages API calls for frontend")
+    Container(cntBFFX, "BFF-X","", "Manages API calls for X frontend client")
+    Container(cntBFFY, "BFF-Y","", "Manages API calls for Y frontend client")
     Container(cntPartnersService, "Integration Service", "", "Manages API calls for Partners integrations")
     Container(cntAPIGateway, "API Gateway")
 
+    Container(cntIdentityService, "IdentityService", "", "Manages user authentication and access rights")
     System(sysHotelioLogic, "Business logic services")
     Container_Boundary(sysHotelioLogic,""){
         Container(cntBooking, "Booking Service", "", "Manages bookings")
@@ -46,9 +48,12 @@ Lay_Right(cntPromocodes,cntReviews)
 
 'external
 Rel_Down(sysApp, cntAPIGateway, "GraphQL")
+Rel_Down(sysApp, cntIdentityService, "Gets\nJWT-token")
+Rel_Down(sysPartners, cntIdentityService, "Gets\nJWT-token")
 Rel_Down(sysPartners, cntAPIGateway, "REST API\ncalls")
 
 'broker
+Rel(cntIdentityService, cntBroker, "Publishes")
 Rel(cntBooking, cntBroker, "Interacts")
 Rel(cntUsers, cntBroker, "Interacts")
 Rel(cntHotels, cntBroker, "Interacts")
@@ -56,11 +61,14 @@ Rel(cntPromocodes, cntBroker, "Interacts")
 Rel(cntReviews, cntBroker, "Interacts")
 
 'bff
-Rel(cntAPIGateway, cntBFF, "Redirects\nGraphQL")
+Rel_Left(cntAPIGateway, cntIdentityService, "Checks\nauthorization")
+Rel(cntAPIGateway, cntBFFX, "Redirects\nGraphQL")
+Rel(cntAPIGateway, cntBFFY, "Redirects")
 Rel(cntAPIGateway, cntPartnersService, "Redirects\nREST API")
 
 Rel(cntPartnersService, sysHotelioLogic, "gRPC\ncalls")
-Rel(cntBFF, sysHotelioLogic, "gRPC\ncalls")
+Rel(cntBFFX, sysHotelioLogic, "gRPC\ncalls")
+Rel(cntBFFY, sysHotelioLogic, "gRPC\ncalls")
 
 ' Rel(cntPartnersService, cntBooking, "gRPC\ncalls")
 ' Rel(cntPartnersService, cntUsers, "gRPC\ncalls")
