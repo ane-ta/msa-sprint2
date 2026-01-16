@@ -2,6 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import gql from 'graphql-tag';
+import { GraphQLError } from 'graphql'; 
 
 const typeDefs = gql`
 extend schema
@@ -38,12 +39,33 @@ const resolvers = {
   Query: {
     bookingsByUser: async (_, { userId }, context) => {
 		// TODO: Реальный вызов к grpc booking-сервису или заглушка + ACL
-        const headers = context.req.headers;
+        const authenticatedUserId = context.req.headers['userid'];
 
-        if (!headers || headers['userid'] !== userId) {
-          console.log(`ACL FAILED for user: ${userId}`);
-          return [];
+        // 2. Проверяем наличие заголовка
+        if (!authenticatedUserId) {
+            console.error("Authenticated user ID header missing!");
+             throw new GraphQLError('Authentication required.', {
+                extensions: {
+                    code: 'UNAUTHENTICATED',
+                    http: { status: 401 },
+                },
+            });
         }
+        
+        // 3. Сравниваем ID пользователя из запроса с подтвержденным ID
+        if (authenticatedUserId !== userId) {
+          console.log(`ACL FAILED: User ${authenticatedUserId} attempted to access bookings for user ${userId}`);
+          
+          // Выбрасываем ошибку доступа (Forbidden)
+          throw new GraphQLError('You are not authorized to view bookings for this user.', {
+            extensions: {
+                code: 'FORBIDDEN',
+                http: { status: 403 },
+            },
+          });
+
+        }
+        
         
         console.log(`ACL PASSED for user: ${userId}. Proceeding with gRPC call.`);
         return mockBookings.filter(b => b.userId === userId);
